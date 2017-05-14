@@ -1,3 +1,5 @@
+#define LUA_LIB
+
 #include "skynet_malloc.h"
 
 #include <stdlib.h>
@@ -565,8 +567,9 @@ lsendlow(lua_State *L) {
 	int id = luaL_checkinteger(L, 1);
 	int sz = 0;
 	void *buffer = get_buffer(L, 2, &sz);
-	skynet_socket_send_lowpriority(ctx, id, buffer, sz);
-	return 0;
+	int err = skynet_socket_send_lowpriority(ctx, id, buffer, sz);
+	lua_pushboolean(L, !err);
+	return 1;
 }
 
 static int
@@ -674,7 +677,7 @@ ludp_address(lua_State *L) {
 	return 2;
 }
 
-int
+LUAMOD_API int
 luaopen_socketdriver(lua_State *L) {
 	luaL_checkversion(L);
 	luaL_Reg l[] = {
