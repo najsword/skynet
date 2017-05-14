@@ -35,12 +35,20 @@ $(JEMALLOC_STATICLIB) : 3rd/jemalloc/Makefile
 	git submodule update --init
 
 3rd/jemalloc/Makefile : | 3rd/jemalloc/autogen.sh
-	cd 3rd/jemalloc && ./autogen.sh --with-jemalloc-prefix=je_ --disable-valgrind
+	cd 3rd/jemalloc && find ./ -name "*.sh" | xargs chmod +x && ./autogen.sh --with-jemalloc-prefix=je_ --disable-valgrind
 
 jemalloc : $(MALLOC_STATICLIB)
 
 update3rd :
 	rm -rf 3rd/jemalloc && git submodule update --init
+
+#zlib
+ZLIB_STATICLIB := 3rd/lua-zlib/src/libz.a
+Z_LIB ?= $(ZLIB_STATICLIB)
+
+$(ZLIB_STATICLIB):
+	cd 3rd/lua-zlib/src && sh ./configure --libdir=./ && $(MAKE)
+zlib : $(ZLIB_STATICLIB)
 
 # skynet
 
@@ -48,7 +56,8 @@ CSERVICE = snlua logger gate harbor
 LUA_CLIB = skynet socketdriver bson mongo md5 netpack \
   clientsocket memory profile multicast \
   cluster crypt sharedata stm sproto lpeg \
-  mysqlaux debugchannel
+  mysqlaux debugchannel \
+  cjson protobuf unqlite lsqlite3 zlib mt19937 snowflake \
 
 SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
   skynet_server.c skynet_start.c skynet_timer.c skynet_error.c \
@@ -129,6 +138,38 @@ $(LUA_CLIB_PATH)/mysqlaux.so : lualib-src/lua-mysqlaux.c | $(LUA_CLIB_PATH)
 
 $(LUA_CLIB_PATH)/debugchannel.so : lualib-src/lua-debugchannel.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@	
+
+#mt19937随机数
+$(LUA_CLIB_PATH)/mt19937.so: lualib-src/mt19937-64/mt19937-64.c lualib-src/mt19937-64/lmt19937.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+#snowflake全局uuid生成器
+$(LUA_CLIB_PATH)/snowflake.so: lualib-src/lua-snowflake.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
+
+#zlib
+$(LUA_CLIB_PATH)/zlib.so: 3rd/lua-zlib/lua_zlib.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-zlib -L3rd/lua-zlib/src $^ -o $@ -lz
+
+#cjson
+$(LUA_CLIB_PATH)/cjson.so: | $(LUA_CLIB_PATH)
+	cd 3rd/lua-cjson && $(MAKE) LUA_INCLUDE_DIR=../../$(LUA_INC) CC=$(CC) \
+	CJSON_LDFLAGS="$(SHARED)" && cd ../.. && cp 3rd/lua-cjson/cjson.so $@
+
+#unqlite
+$(LUA_CLIB_PATH)/unqlite.so: 3rd/lua-unqlite/lua-unqlite.c 3rd/unqlite/unqlite.c | $(LUA_CLIB_PATH)
+	$(CC) $(DEFS) $(CFLAGS) $(SHARED) -I3rd/unqlite $^ -o $@ $(LDFLAGS)
+
+#lsqlite3
+$(LUA_CLIB_PATH)/lsqlite3.so: 3rd/lua-sqlite3/lsqlite3.c 3rd/sqlite3/sqlite3.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-sqlite3 -I3rd/sqlite3  $^ -o $@ 
+
+#protobuf
+$(LUA_CLIB_PATH)/protobuf.so :  3rd/lua-pbc/alloc.c 3rd/lua-pbc/array.c 3rd/lua-pbc/bootstrap.c \
+	3rd/lua-pbc/context.c 3rd/lua-pbc/decode.c 3rd/lua-pbc/map.c 3rd/lua-pbc/pattern.c 3rd/lua-pbc/proto.c \
+	3rd/lua-pbc/register.c 3rd/lua-pbc/rmessage.c 3rd/lua-pbc/stringpool.c 3rd/lua-pbc/varint.c \
+	3rd/lua-pbc/wmessage.c 3rd/lua-pbc/pbc-lua.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-pbc $^ -o $@
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
