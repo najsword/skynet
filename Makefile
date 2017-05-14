@@ -172,7 +172,7 @@ $(LUA_CLIB_PATH)/protobuf.so :  3rd/lua-pbc/alloc.c 3rd/lua-pbc/array.c 3rd/lua-
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-pbc $^ -o $@
 
 clean :
-	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/*.so $(LUA_CLIB_PATH)/*.so
+	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/* $(LUA_CLIB_PATH)/*
 
 cleanall: clean
 ifneq (,$(wildcard 3rd/jemalloc/Makefile))
