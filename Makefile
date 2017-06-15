@@ -22,7 +22,7 @@ $(LUA_STATICLIB) :
 JEMALLOC_STATICLIB := 3rd/jemalloc/lib/libjemalloc_pic.a
 JEMALLOC_INC := 3rd/jemalloc/include/jemalloc
 
-all : jemalloc
+all : jemalloc zlib
 	
 .PHONY : jemalloc update3rd
 
@@ -42,12 +42,12 @@ jemalloc : $(MALLOC_STATICLIB)
 update3rd :
 	rm -rf 3rd/jemalloc && git submodule update --init
 
-#zlib
+#zlib(in vi :set ff=unix)
 ZLIB_STATICLIB := 3rd/lua-zlib/src/libz.a
 Z_LIB ?= $(ZLIB_STATICLIB)
 
-$(ZLIB_STATICLIB):
-	cd 3rd/lua-zlib/src && sh ./configure --libdir=./ && $(MAKE)
+$(ZLIB_STATICLIB) :
+	cd 3rd/lua-zlib/src && dos2unix configure && ./configure --libdir=./ && $(MAKE)
 zlib : $(ZLIB_STATICLIB)
 
 # skynet
