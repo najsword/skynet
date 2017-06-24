@@ -13,12 +13,19 @@ local function watching()
 	w:psubscribe "hello.*"
 	while true do
 		print("Watch", w:message())
+		skynet.sleep(1*100)
 	end
 end
 
 skynet.start(function()
 	skynet.fork(watching)
-	local db = redis.connect(conf)
+	local db = nil
+	local ok, msg = xpcall(function()
+		db = redis.connect(conf)
+	end, debug.traceback)
+	if not ok then
+		error(msg)
+	end
 
 	db:del "C"
 	db:set("A", "hello")
@@ -56,9 +63,11 @@ skynet.start(function()
 
 	for i=1,10 do
 		db:publish("foo", i)
+		print("publish foo", i)
 	end
 	for i=11,20 do
 		db:publish("hello.foo", i)
+		print("publish hello.foo", i)
 	end
 
 	db:disconnect()
