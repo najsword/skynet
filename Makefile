@@ -47,7 +47,7 @@ ZLIB_STATICLIB := 3rd/lua-zlib/src/libz.a
 Z_LIB ?= $(ZLIB_STATICLIB)
 
 $(ZLIB_STATICLIB) :
-	cd 3rd/lua-zlib/src && dos2unix configure && ./configure --libdir=./ && $(MAKE)
+	cd 3rd/lua-zlib/src && chmod +x ./configure && dos2unix configure && ./configure --libdir=./ && $(MAKE)
 zlib : $(ZLIB_STATICLIB)
 
 # skynet
