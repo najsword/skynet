@@ -58,6 +58,7 @@ LUA_CLIB = skynet \
   client \
   bson  md5 sproto lpeg \
   cjson protobuf \
+  websocketnetpack clientwebsocket \
   zlib mt19937 snowflake \
   unqlite lsqlite3 \
   
@@ -123,6 +124,13 @@ $(LUA_CLIB_PATH)/sproto.so : lualib-src/sproto/sproto.c lualib-src/sproto/lsprot
 $(LUA_CLIB_PATH)/lpeg.so : 3rd/lpeg/lpcap.c 3rd/lpeg/lpcode.c 3rd/lpeg/lpprint.c 3rd/lpeg/lptree.c 3rd/lpeg/lpvm.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lpeg $^ -o $@ 
 
+#websocket解析库
+$(LUA_CLIB_PATH)/websocketnetpack.so: lualib-src/lua-websocketnetpack.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -Iskynet-src -o $@ 
+
+#用于客户端的websocket
+$(LUA_CLIB_PATH)/clientwebsocket.so: lualib-src/lua-clientwebsocket.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread
 
 #mt19937随机数
 $(LUA_CLIB_PATH)/mt19937.so: lualib-src/mt19937-64/mt19937-64.c lualib-src/mt19937-64/lmt19937.c | $(LUA_CLIB_PATH)
