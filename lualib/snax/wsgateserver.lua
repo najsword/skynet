@@ -15,6 +15,13 @@ local CMD = setmetatable({}, { __gc = function() netpack.clear(queue) end })
 local nodelay = false
 local connection = {}  --{ isconnect, iswebsocket_handeshake (default 1) }
 
+FIN_TEXT       = 0x01
+FIN_BINARY     = 0x02
+FIN_TEST       = 0x03
+FIN_DISCONNECT = 0x08
+FIN_PING       = 0x09
+FIN_PONG       = 0x0a
+
 -------------websocket 握手时解析http请求头--------------------------------
 local function parse_httpheader(http_str)
     local header = {}
@@ -101,12 +108,28 @@ local function writefunc(fd)
 		end
 	end
 end
+
+local function send_frame(fd, opcode, data)
+	local finbit, maskbit = 0x80, 0x00
+	local frame = string.pack("B", finbit|opcode)
+	local len = #data
+	if len < 126 then
+		frame = frame..string.pack("B", len|maskbit)
+	elseif  len < 0xFFFF then
+		frame = frame..string.pack(">BH", 126|maskbit, len)
+	else
+		frame = frame..string.pack(">BL", 127|maskbit, len)
+	end
+	frame = frame..data
+	socketdriver.send(fd, frame)
+end
 ------------------websocket 握手时使用的相关接口  end----------------------
 
 
 function gateserver.openclient(fd)
 	if connection[fd] ~= nil  and  connection[fd].isconnect then
 		socketdriver.start(fd)
+		skynet.error("gateserver openclient fd="..fd)
 		return true
 	end
 	return false
@@ -117,11 +140,12 @@ function gateserver.closeclient(fd)
 	if c then
 		connection[fd] = nil
 		socketdriver.close(fd)
+		skynet.error("gateserver closeclient fd="..fd)
 	end
 end
 
 function gateserver.send_buffer(fd, buffer)
-	
+	send_frame(fd, FIN_TEXT, buffer)
 end
 
 function gateserver.checkwebsocket(fd, header)
@@ -149,6 +173,7 @@ function gateserver.start(handler)
 		maxclient = conf.maxclient or 1024
 		nodelay = conf.nodelay
 		skynet.error(string.format("Listen on %s:%d", address, port))
+		print("address=", address, "port=", port)
 		socket = socketdriver.listen(address, port)
 		socketdriver.start(socket)
 		if handler.open then
