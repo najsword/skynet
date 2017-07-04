@@ -139,6 +139,7 @@ function gateserver.checkwebsocket(fd, header)
 end
 
 function gateserver.start(handler)
+	print("gateserver.start handler=", handler)
 	assert(handler.message)
 	assert(handler.connect)
 
