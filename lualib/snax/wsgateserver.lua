@@ -120,6 +120,10 @@ function gateserver.closeclient(fd)
 	end
 end
 
+function gateserver.send_buffer(fd, buffer)
+	
+end
+
 function gateserver.checkwebsocket(fd, header)
 
     local code, result = checkwebsocket_valid(header, nil, nil)
@@ -266,16 +270,16 @@ function gateserver.start(handler)
 		end
 	}
 
-     skynet.start(function()
-     skynet.dispatch("lua", function (_, address, cmd, ...)
-     local f = CMD[cmd]
-          if f then
-              skynet.ret(skynet.pack(f(address, ...)))
-          else
-              skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
-          end
+    skynet.start(function()
+     	skynet.dispatch("lua", function (_, address, cmd, ...)
+     	    local f = CMD[cmd]
+        	if f then
+            	skynet.ret(skynet.pack(f(address, ...)))
+          	else
+            	skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
+        	end
         end)
-      end)
+    end)
  end
 
 return gateserver
