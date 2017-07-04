@@ -4,7 +4,7 @@ local socketdriver = require "skynet.socketdriver"
 local httpd = require "http.httpd"
 local urllib = require "http.url"
 local string = require "string"
-local crypt = require "crypt"
+local crypt = require "skynet.crypt"
 local gateserver = {}
 
 local socket	-- listen socket
