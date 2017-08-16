@@ -89,8 +89,8 @@ function CMD.kick(source, fd)
 end
 
 --
-function CMD.send_buffer(source, fd, buffer)
-	gateserver.send_buffer(fd, buffer)
+function CMD.send_buffer(source, fd, buffer, isText)
+	gateserver.send_buffer(fd, buffer, isText)
 end
 
 function handler.command(cmd, source, ...)

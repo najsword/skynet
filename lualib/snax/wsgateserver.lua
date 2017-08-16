@@ -144,8 +144,14 @@ function gateserver.closeclient(fd)
 	end
 end
 
-function gateserver.send_buffer(fd, buffer)
-	send_frame(fd, FIN_TEXT, buffer)
+--默认发送binary
+function gateserver.send_buffer(fd, buffer, isText)
+	if isText then
+		send_frame(fd, FIN_TEXT, buffer)
+	else
+		send_frame(fd, FIN_BINARY, buffer)
+	end
+	
 end
 
 function gateserver.checkwebsocket(fd, header)
@@ -163,7 +169,6 @@ function gateserver.checkwebsocket(fd, header)
 end
 
 function gateserver.start(handler)
-	print("gateserver.start handler=", handler)
 	assert(handler.message)
 	assert(handler.connect)
 
@@ -173,8 +178,7 @@ function gateserver.start(handler)
 		local port = assert(conf.port)
 		maxclient = conf.maxclient or 1024
 		nodelay = conf.nodelay
-		skynet.error(string.format("Listen on %s:%d", address, port))
-		print("address=", address, "port=", port)
+		skynet.error(string.format("wsgateserver listen on %s:%d", address, port))
 		socket = socketdriver.listen(address, port)
 		socketdriver.start(socket)
 		if handler.open then
