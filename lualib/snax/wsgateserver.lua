@@ -15,12 +15,13 @@ local CMD = setmetatable({}, { __gc = function() netpack.clear(queue) end })
 local nodelay = false
 local connection = {}  --{ isconnect, iswebsocket_handeshake (default 1) }
 
-FIN_TEXT       = 0x01
-FIN_BINARY     = 0x02
-FIN_TEST       = 0x03
-FIN_DISCONNECT = 0x08
-FIN_PING       = 0x09
-FIN_PONG       = 0x0a
+local FIN_TEXT       = 0x01
+local FIN_BINARY     = 0x02
+local FIN_TEST       = 0x03
+local FIN_DISCONNECT = 0x08
+local FIN_PING       = 0x09
+local FIN_PONG       = 0x0a
+
 
 -------------websocket 握手时解析http请求头--------------------------------
 local function parse_httpheader(http_str)
@@ -129,7 +130,7 @@ end
 function gateserver.openclient(fd)
 	if connection[fd] ~= nil  and  connection[fd].isconnect then
 		socketdriver.start(fd)
-		skynet.error("gateserver openclient fd="..fd)
+		skynet.error("wsgateserver openclient fd="..fd)
 		return true
 	end
 	return false
@@ -140,7 +141,7 @@ function gateserver.closeclient(fd)
 	if c then
 		connection[fd] = nil
 		socketdriver.close(fd)
-		skynet.error("gateserver closeclient fd="..fd)
+		skynet.error("wsgateserver closeclient fd="..fd)
 	end
 end
 
@@ -155,7 +156,6 @@ function gateserver.send_buffer(fd, buffer, isText)
 end
 
 function gateserver.checkwebsocket(fd, header)
-
     local code, result = checkwebsocket_valid(header, nil, nil)
     if code then
 		httpd.write_response(writefunc(fd), code, result)
@@ -189,6 +189,7 @@ function gateserver.start(handler)
 	function CMD.close()
 		assert(socket)
 		socketdriver.close(socket)
+		skynet.error(string.format("wsgateserver close"))
 	end
 
 	local MSG = {}
@@ -251,12 +252,14 @@ function gateserver.start(handler)
 		end
 	end
 
+	--被关闭socket回调
 	function MSG.close(fd)
 		if fd ~= socket then
 			if handler.disconnect then
 				handler.disconnect(fd)
 			end
 			close_fd(fd)
+			skynet.error(string.format("wsgateserver socket[%d] closed", fd))
 		else
 			socket = nil
 		end

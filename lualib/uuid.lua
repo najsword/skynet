@@ -165,9 +165,15 @@ end
 -- -- LuaSocket loaded, so below line does the same as the example from randomseed()
 -- uuid.seed()
 -- print("here's a new uuid: ",uuid())
-function M.seed()
+function M.seed(rand_type)
   if package.loaded["socket"] and package.loaded["socket"].gettime then
     return M.randomseed(package.loaded["socket"].gettime()*10000)
+  elseif rand_type == 2 then
+    local data = io.open("/dev/urandom", "r"):read(4)
+    M.randomseed(os.time() + data:byte(1) + (data:byte(2) * 256) + (data:byte(3) * 65536) + (data:byte(4) * 4294967296))
+  elseif rand_type == 3 then
+    local data = io.open("/dev/random", "r"):read(4)
+    M.randomseed(os.time() + data:byte(1) + (data:byte(2) * 256) + (data:byte(3) * 65536) + (data:byte(4) * 4294967296))
   else
     return M.randomseed(os.time())
   end
