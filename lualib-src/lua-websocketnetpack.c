@@ -26,6 +26,8 @@
 #define TYPE_CLOSE 5
 #define TYPE_WARNING 6
 
+
+
 struct netpack {
 	int id;
 	int size;
@@ -233,6 +235,7 @@ static uint64_t ntoh64(uint64_t host) {
     return ret;
 }
 /*
+* @opcode 1-文本数据 2-二进制数据 3-测试用 8-关闭连接 9-ping包 10-pong包
 * @return -1表示包头长不够 -2表示包前两个字节无效逻辑需要扔掉 -3表示是客户端浏览器关闭
 */
 static inline int
@@ -259,7 +262,7 @@ read_size(uint8_t * buffer, int size, int* pack_head_length, int* mask, int * is
     }
     
     if (opcode == 8){
-	return -3;
+		return -2;
     }
 
     int offset = 0;
@@ -588,6 +591,7 @@ filter_data_(lua_State *L, int fd, uint8_t * buffer, int size, int wsocket_hande
 			lua_pushinteger(L, fd);
 			return 3;
 		}
+
 		buffer+=pack_head_length;
 		size-=pack_head_length;
 		
