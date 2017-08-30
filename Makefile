@@ -58,7 +58,7 @@ LUA_CLIB = skynet \
   client \
   bson  md5 sproto lpeg \
   cjson protobuf \
-  websocketnetpack clientwebsocket \
+  websocketnetpack clientwebsocket webclient \
   zlib mt19937 snowflake \
   unqlite lsqlite3 \
   
@@ -131,6 +131,10 @@ $(LUA_CLIB_PATH)/websocketnetpack.so: lualib-src/lua-websocketnetpack.c | $(LUA_
 #用于客户端的websocket
 $(LUA_CLIB_PATH)/clientwebsocket.so: lualib-src/lua-clientwebsocket.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread
+
+#用于请求http, https
+$(LUA_CLIB_PATH)/webclient.so: lualib-src/lua-webclient.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lcurl
 
 #mt19937随机数
 $(LUA_CLIB_PATH)/mt19937.so: lualib-src/mt19937-64/mt19937-64.c lualib-src/mt19937-64/lmt19937.c | $(LUA_CLIB_PATH)
