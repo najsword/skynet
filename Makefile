@@ -61,7 +61,7 @@ LUA_CLIB = skynet \
   websocketnetpack clientwebsocket webclient \
   zlib mt19937 snowflake \
   unqlite lsqlite3 \
-  crypto \
+  cipher codec \
   
   
 LUA_CLIB_SKYNET = \
@@ -169,12 +169,12 @@ $(LUA_CLIB_PATH)/protobuf.so:  3rd/lua-pbc/alloc.c 3rd/lua-pbc/array.c 3rd/lua-p
 	3rd/lua-pbc/wmessage.c 3rd/lua-pbc/pbc-lua.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-pbc $^ -o $@
 
-#crypto
-$(LUA_CLIB_PATH)/crypto.so: 3rd/lua-crypto/aes.c 3rd/lua-crypto/crc16.c 3rd/lua-crypto/crc32.c 3rd/lua-crypto/crc64.c \
-	3rd/lua-crypto/digest.c 3rd/lua-crypto/hmac.c 3rd/lua-crypto/md5.c 3rd/lua-crypto/pbkdf2_hmac.c 3rd/lua-crypto/rc4.c \
-	3rd/lua-crypto/sha.c 3rd/lua-crypto/sha1.c 3rd/lua-crypto/sha224.c 3rd/lua-crypto/sha256.c 3rd/lua-crypto/sha384.c \
-	3rd/lua-crypto/sha512.c 3rd/lua-crypto/tdes.c 3rd/lua-crypto/crypto.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-crypto $^ -o $@
+#cipher
+$(LUA_CLIB_PATH)/cipher.so: 3rd/lua-cipher/aes.c 3rd/lua-cipher/crc16.c 3rd/lua-cipher/crc32.c 3rd/lua-cipher/crc64.c \
+	3rd/lua-cipher/digest.c 3rd/lua-cipher/hmac.c 3rd/lua-cipher/md5.c 3rd/lua-cipher/pbkdf2_hmac.c 3rd/lua-cipher/rc4.c \
+	3rd/lua-cipher/sha.c 3rd/lua-cipher/sha1.c 3rd/lua-cipher/sha224.c 3rd/lua-cipher/sha256.c 3rd/lua-cipher/sha384.c \
+	3rd/lua-cipher/sha512.c 3rd/lua-cipher/tdes.c 3rd/lua-cipher/cipher.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-cipher $^ -o $@
 	
 #codec
 $(LUA_CLIB_PATH)/codec.so: 3rd/lua-codec/codec.c | $(LUA_CLIB_PATH)

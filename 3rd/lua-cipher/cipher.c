@@ -253,7 +253,7 @@ static int l_crc64(lua_State *L) {
 
 
 LUAMOD_API int 
-luaopen_crypto(lua_State *L) {
+luaopen_cipher(lua_State *L) {
   luaL_checkversion(L);
   struct luaL_Reg l[] = {
     {"md5",     l_md5},

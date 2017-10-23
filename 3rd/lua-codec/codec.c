@@ -135,8 +135,9 @@ static int codec_aes_encrypt(lua_State *L)
   const char *src = luaL_checklstring(L, 1, &len);
   char *key = luaL_checkstring(L, 2);
 
-  EVP_CIPHER_CTX ctx;
-  EVP_CIPHER_CTX_init(&ctx);
+  EVP_CIPHER_CTX * ctx;
+  // EVP_CIPHER_CTX_init(&ctx);
+  ctx = EVP_CIPHER_CTX_new();
 
   int ret = EVP_EncryptInit_ex(&ctx, EVP_aes_128_ecb(), NULL, (unsigned char *)key, NULL);
   if(ret != 1)
@@ -186,8 +187,9 @@ static int codec_aes_decrypt(lua_State *L)
   const char *src = luaL_checklstring(L, 1, &len);
   char *key = luaL_checkstring(L, 2);
 
-  EVP_CIPHER_CTX ctx;
-  EVP_CIPHER_CTX_init(&ctx);
+  EVP_CIPHER_CTX * ctx;
+  // EVP_CIPHER_CTX_init(&ctx);
+  ctx = EVP_CIPHER_CTX_new();
 
   int ret = EVP_DecryptInit_ex(&ctx, EVP_aes_128_ecb(), NULL, (unsigned char *)key, NULL);
   if(ret != 1)
