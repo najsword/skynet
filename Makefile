@@ -176,6 +176,9 @@ $(LUA_CLIB_PATH)/crypto.so: 3rd/lua-crypto/aes.c 3rd/lua-crypto/crc16.c 3rd/lua-
 	3rd/lua-crypto/sha512.c 3rd/lua-crypto/tdes.c 3rd/lua-crypto/crypto.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-crypto $^ -o $@
 	
+#codec
+$(LUA_CLIB_PATH)/codec.so: 3rd/lua-codec/codec.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-codec $^ -o $@ -lcrypto
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/* $(LUA_CLIB_PATH)/*
