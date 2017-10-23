@@ -224,7 +224,7 @@ static int codec_aes_decrypt(lua_State *L)
 }
 
 /**
- * SHA1WithRSA私钥签名
+ * SHA1_With_RSA私钥签名
  *
  * LUA示例:
  * local codec = require('codec')
@@ -242,7 +242,7 @@ static int codec_rsa_private_sign(lua_State *L)
   SHA_CTX c;
   unsigned char sha[SHA_DIGEST_LENGTH];
   memset(sha, 0, SHA_DIGEST_LENGTH);
-  if(SHA_Init(&c) != 1)
+  if(SHA1_Init(&c) != 1)
   {
     OPENSSL_cleanse(&c, sizeof(c));
     return luaL_error(L, "SHA init error");
@@ -292,7 +292,7 @@ static int codec_rsa_private_sign(lua_State *L)
 }
 
 /**
- * SHA1WithRSA公钥验签
+ * SHA1_With_RSA公钥验签
  *
  * LUA示例:
  * local codec = require('codec')
@@ -315,7 +315,7 @@ static int codec_rsa_public_verify(lua_State *L)
   int ctxlen = sizeof(ctx);
   unsigned char sha[SHA_DIGEST_LENGTH];
   memset(sha, 0, SHA_DIGEST_LENGTH);
-  if(SHA_Init(&ctx) != 1)
+  if(SHA1_Init(&ctx) != 1)
   {
     OPENSSL_cleanse(&ctx, ctxlen);
     return luaL_error(L, "SHA init error");
