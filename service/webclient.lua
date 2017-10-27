@@ -54,7 +54,7 @@ end
 -- @treturn string 当成功时，返回内容，当失败时，返回出错原因 
 -- @usage skynet.call(webclient, "lua", "request", "http://www.dpull.com")
 -- @usage skynet.send(webclient, "lua", "request", "http://www.dpull.com", nil, nil, true)
-local function request(url, get, post, no_reply)
+local function request(url, get, post, header, no_reply)
     if get then
         local i = 0
         for k, v in pairs(get) do
@@ -75,13 +75,23 @@ local function request(url, get, post, no_reply)
             table.insert(data, string.format("%s=%s", k, v))
         end   
         post = table.concat(data , "&")
-    end   
+    end
 
     local req, key = webclient:request(url, post)
     if not req then
         return skynet.ret()
     end
     assert(key)
+
+    if header and type(header) == "table" then
+        local data = {}
+        for k, v in pairs(header) do
+            table.insert(data, string.format("%s: %s", k, v))
+        end
+        if #data > 0 then
+            webclient:set_httpheader(req, table.unpack(data))
+        end
+    end
 
     local response = nil
     if not no_reply then
