@@ -1,4 +1,4 @@
-//使用此库要求OpenSSL 1.1.0的版本
+//使用此库要求OpenSSL 1.1.0以下的版本,比如OpenSSL 1.0
 #define LUA_LIB
 
 #include <lua.h>
@@ -143,8 +143,7 @@ static int codec_aes_encrypt(lua_State *L)
   int ret = EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, (unsigned char *)key, NULL);
   if(ret != 1)
   {
-    //EVP_CIPHER_CTX_cleanup(ctx);
-    EVP_CIPHER_CTX_reset(ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
     return luaL_error(L, "EVP encrypt init error");
   }
 
@@ -155,7 +154,7 @@ static int codec_aes_encrypt(lua_State *L)
   ret = EVP_EncryptUpdate(ctx, (unsigned char *)dst, &wn, (unsigned char *)src, len);
   if(ret != 1)
   {
-    EVP_CIPHER_CTX_reset(ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
     return luaL_error(L, "EVP encrypt update error");
   }
   n = wn;
@@ -163,10 +162,10 @@ static int codec_aes_encrypt(lua_State *L)
   ret = EVP_EncryptFinal_ex(ctx, (unsigned char *)(dst + n), &wn);
   if(ret != 1)
   {
-    EVP_CIPHER_CTX_reset(ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
     return luaL_error(L, "EVP encrypt final error");
   }
-  EVP_CIPHER_CTX_reset(ctx);
+  EVP_CIPHER_CTX_cleanup(ctx);
   n += wn;
 
   lua_pushlstring(L, dst, n);
@@ -196,7 +195,7 @@ static int codec_aes_decrypt(lua_State *L)
   int ret = EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, (unsigned char *)key, NULL);
   if(ret != 1)
   {
-    EVP_CIPHER_CTX_reset(ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
     return luaL_error(L, "EVP decrypt init error");
   }
 
@@ -207,7 +206,7 @@ static int codec_aes_decrypt(lua_State *L)
   ret = EVP_DecryptUpdate(ctx, (unsigned char *)dst, &wn, (unsigned char *)src, len);
   if(ret != 1)
   {
-    EVP_CIPHER_CTX_reset(ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
     return luaL_error(L, "EVP decrypt update error");
   }
   n = wn;
@@ -215,10 +214,10 @@ static int codec_aes_decrypt(lua_State *L)
   ret = EVP_DecryptFinal_ex(ctx, (unsigned char *)(dst + n), &wn);
   if(ret != 1)
   {
-    EVP_CIPHER_CTX_reset(ctx);
+    EVP_CIPHER_CTX_cleanup(ctx);
     return luaL_error(L, "EVP decrypt final error");
   }
-  EVP_CIPHER_CTX_reset(ctx);
+  EVP_CIPHER_CTX_cleanup(ctx);
   n += wn;
 
   lua_pushlstring(L, dst, n);
@@ -302,7 +301,7 @@ static int codec_rsa_private_sign(lua_State *L)
  * local sign = [[...]] --BASE64签名
  * local bs = codec.base64_decode(sign)
  * local pem = [[...]] --公钥PEM字符串
- * local type = 1
+ * local type = 0 --openssl1.1.0版本更新后此值为0
  * local ok = codec.rsa_public_verify(src, bs, pem, type) --true/false
  */
 static int codec_rsa_public_verify(lua_State *L)
@@ -362,7 +361,7 @@ static int codec_rsa_public_verify(lua_State *L)
  * local codec = require('codec')
  * local src = 'something'
  * local pem = [[...]] --公钥PEM字符串
- * local type = 1
+ * local type = 0 --openssl1.1.0版本更新后此值为0
  * local bs = codec.rsa_public_encrypt(src, pem, type)
  * local dst = codec.base64_encode(bs) --BASE64密文
  */
