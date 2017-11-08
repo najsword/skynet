@@ -1,3 +1,4 @@
+//使用此库要求OpenSSL 1.1.0以下的版本,比如OpenSSL 1.0
 #define LUA_LIB
 
 #include <lua.h>
@@ -338,7 +339,7 @@ static int codec_rsa_public_verify(lua_State *L)
     BIO_free_all(bio);
     return luaL_error(L, "PEM error");
   }
-  RSA *rsa = type == 1 ? PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL) : PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL);
+  RSA *rsa = type == 1 ? PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL) : PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL);
   if(rsa == NULL)
   {
     BIO_free_all(bio);
@@ -377,7 +378,7 @@ static int codec_rsa_public_encrypt(lua_State *L)
     BIO_free_all(bio);
     return luaL_error(L, "PEM error");
   }
-  RSA *rsa = type == 1 ? PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL) : PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL);
+  RSA *rsa = type == 1 ? PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL) : PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL);
   if(rsa == NULL)
   {
     BIO_free_all(bio);
