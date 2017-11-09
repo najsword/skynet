@@ -21,6 +21,8 @@ make
 
 For FreeBSD , use gmake instead of make.
 
+## Notice use this branch need openssl >= version 1.1.0 and curl >= 7.23.0
+
 ## Test
 
 Run these in different consoles:
