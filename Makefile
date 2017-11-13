@@ -61,7 +61,7 @@ LUA_CLIB = skynet \
   websocketnetpack clientwebsocket webclient \
   zlib mt19937 snowflake \
   unqlite lsqlite3 \
-  cipher codec \
+  cipher codec iconv \
   
   
 LUA_CLIB_SKYNET = \
@@ -179,6 +179,10 @@ $(LUA_CLIB_PATH)/cipher.so: 3rd/lua-cipher/aes.c 3rd/lua-cipher/crc16.c 3rd/lua-
 #codec
 $(LUA_CLIB_PATH)/codec.so: 3rd/lua-codec/codec.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-codec $^ -o $@ -lcrypto
+
+#iconv
+$(LUA_CLIB_PATH)/iconv.so: 3rd/lua-iconv/luaiconv.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/* $(LUA_CLIB_PATH)/*
