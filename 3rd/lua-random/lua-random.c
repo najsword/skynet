@@ -5,8 +5,8 @@
 
 static int g_inited = 0;
 
-static int
-lmtinit(lua_State *L) {
+/* mt19937 init with array */
+static int lrandomseed(lua_State *L) {
 	if (g_inited) {
 		lua_pushboolean(L, 1);
 		return 1;
@@ -33,14 +33,30 @@ lmtinit(lua_State *L) {
 	return 1;
 }
 
-static int
-lmtrandi(lua_State *L) {
+/* mt19937 rand integer, need 2 integer, return [a, b] or [1, a] */
+static int lmtrandom(lua_State *L) {
 	int args = lua_gettop(L);
-	if (args < 2) {
-		return luaL_error(L, "mt19937.randi need 2 numbers for a range.");
+	if (args > 2){
+		return luaL_error(L, "mt19937.randi need 0 numbers or 1 number or 2 numbers for a range.");
 	}
-	lua_Integer a = luaL_checkinteger(L, 1);
-	lua_Integer b = luaL_checkinteger(L, 2);
+
+	/* return double num */
+	if (args == 0){
+		lua_pushnumber(L, (lua_Number)genrand64_real2());
+		return 1;
+	}
+
+	/* return int */
+	lua_Integer a = 0;
+	lua_Integer b = 0;
+	if (args == 1) {
+		a = 1;
+		b = luaL_checkinteger(L, 1) + 1;
+	} else if(args == 2) {
+		a = luaL_checkinteger(L, 1);
+		b = luaL_checkinteger(L, 2) + 1;
+	} 
+	
 	lua_Integer from = a < b ? a : b;
 	lua_Integer to = a > b ? a : b;
 	if (from == to) {
@@ -51,19 +67,13 @@ lmtrandi(lua_State *L) {
 	return 1;
 }
 
-static int
-lmtrandr(lua_State *L) {
-	lua_pushnumber(L, (lua_Number)genrand64_real2());
-	return 1;
-}
 
 int
-luaopen_mt19937(lua_State *L) {
+luaopen_random(lua_State *L) {
 	luaL_checkversion(L);
 	luaL_Reg l[] = {
-		{ "init", lmtinit },
-		{ "randi", lmtrandi },
-		{ "randr", lmtrandr },
+		{ "randomseed", lrandomseed },
+		{ "random", lmtrandom },
 		{ NULL, NULL }
 	};
 	luaL_newlib(L,l);

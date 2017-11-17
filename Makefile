@@ -59,9 +59,8 @@ LUA_CLIB = skynet \
   bson  md5 sproto lpeg \
   cjson protobuf \
   websocketnetpack clientwebsocket webclient \
-  zlib mt19937 snowflake \
-  unqlite lsqlite3 \
-  cipher codec iconv \
+  zlib unqlite lsqlite3 \
+  cipher codec iconv random snowflake osext \
   
   
 LUA_CLIB_SKYNET = \
@@ -137,14 +136,6 @@ $(LUA_CLIB_PATH)/clientwebsocket.so: lualib-src/lua-clientwebsocket.c | $(LUA_CL
 $(LUA_CLIB_PATH)/webclient.so: lualib-src/lua-webclient.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lcurl
 
-#mt19937随机数
-$(LUA_CLIB_PATH)/mt19937.so: lualib-src/mt19937-64/mt19937-64.c lualib-src/mt19937-64/lmt19937.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
-
-#snowflake全局uuid生成器
-$(LUA_CLIB_PATH)/snowflake.so: lualib-src/lua-snowflake.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
-
 #zlib
 $(LUA_CLIB_PATH)/zlib.so: 3rd/lua-zlib/lua_zlib.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-zlib -L3rd/lua-zlib/src $^ -o $@ -lz
@@ -183,6 +174,18 @@ $(LUA_CLIB_PATH)/codec.so: 3rd/lua-codec/codec.c | $(LUA_CLIB_PATH)
 #iconv
 $(LUA_CLIB_PATH)/iconv.so: 3rd/lua-iconv/luaiconv.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+#mt19937随机数
+$(LUA_CLIB_PATH)/random.so: 3rd/lua-random/lua-random.c 3rd/lua-random/mt19937-64.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+#snowflake全局id
+$(LUA_CLIB_PATH)/snowflake.so: 3rd/lua-snowflake/lua-snowflake.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
+
+#osext(uuid, time)
+$(LUA_CLIB_PATH)/osext.so: 3rd/lua-osext/lua-osext.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -luuid
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/* $(LUA_CLIB_PATH)/*
