@@ -17,40 +17,51 @@ const char SEC  = 	2;
 const char MSEC = 	4;
 const char USEC = 	8;
 
-static char encoding[] = {
-	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-	'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-	'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-	'y', 'z', '0', '1', '2', '3', '4', '5',
-	'6', '7', '8', '9', 'A', 'B', 'C', 'D',
-	'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
-	'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-	'U', 'V', 'W', 'X', 'Y', 'Z'
-};
 
-static void gen_encoding_uuid(char* result, int len){
-	unsigned char uuid[16];
-	char output[24] = { 0 };
-	const char *p = (const char *)uuid;
-	uuid_generate(uuid);
+//适用于90进制及以下
+static const char* encoding = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@#$%^&*()_+-=[]{}|;:,./<>?";
 
-	int i, j;
-	for (j = 0; j < 2; j++){
-		unsigned long long v = *(unsigned long long*)(p + j * 8);
-		int begin = j * 10;
-		int end = begin + 10;
-		for (i = begin; i < end; i++){
-			int idx = 0x3D & v;
-			output[i] = encoding[idx];
-			v = v >> 6;
+//字节流转为任意进制 digital进制数
+static int to_basex(const uint8_t * src, int src_len, int digital, char * output){
+	//64进制
+	int i = 0;
+	int j = src_len / 8;
+	const uint8_t * p = src;
+	if (src_len % 8 != 0){
+		j++;
+	}
+	int sz = 0;
+	char * pout = output;
+	for (i=0; i<j; i++){
+		uint64_t v = *(uint64_t *)(p + i*8);
+		while (v != 0){
+			uint64_t mod = v % digital;
+			*pout = encoding[mod];
+			pout++;
+			sz++;
+			v = v / digital;
 		}
 	}
+	*pout = '\0';
+	sz++;
+	return sz;
+}
+
+
+//转为62进制
+static void gen_encoding_uuid(char* result, int len){
+	unsigned char uuid[16];
+	char output[128] = { 0 };
+	uuid_generate(uuid);
+
+	to_basex(uuid, 16, 62, output);
+
 	len = (len > sizeof(output)) ? sizeof(output) : len;
 	memcpy(result, output, len);
 }
 
 
-//产生62进制压缩格式的8位uuid
+//从62进制里截取8位
 static int luuid_str8(lua_State *L){
 	char buffer[9] = { 0 };
 	gen_encoding_uuid(buffer, 8);
@@ -58,7 +69,7 @@ static int luuid_str8(lua_State *L){
 	return 1;
 }
 
-//产生62进制压缩格式的20位uuid
+//从62进制里截取20位
 static int luuid_str20(lua_State *L){
 	char buffer[21] = { 0 };
 	gen_encoding_uuid(buffer, 20);
@@ -81,10 +92,18 @@ static int luuid_hex(lua_State *L){
 	unsigned char uuid[16];
 	uuid_generate(uuid);
 	char buffer[17] = { 0 };
-	snprintf(buffer, 16, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+	snprintf(buffer, 17, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
 		uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
 		uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
 	lua_pushstring(L, buffer);
+	return 1;
+}
+
+//生成binary的uuid
+static int luuid_binary(lua_State *L){
+	unsigned char uuid[16] = { 0 };
+	uuid_generate(uuid);
+	lua_pushlstring(L, (const char *)uuid, 16);
 	return 1;
 }
 
@@ -169,6 +188,16 @@ static int ltimestamp(lua_State *L) {
 	return 1;
 }
 
+/* 二进制转为[2-90]进制 */
+static int lto_basex(lua_State *L){
+	size_t sz = 0;
+	const uint8_t * text = (const uint8_t *)luaL_checklstring(L, 1, &sz);
+	uint64_t x = (uint64_t)luaL_checknumber( L, 2 );
+	char buffer[256] = { 0 };
+	int ret = to_basex(text, sz, x, buffer);
+	lua_pushlstring(L, buffer, ret);
+	return 1;
+}
 
 LUAMOD_API int
 luaopen_osext(lua_State *L){
@@ -185,6 +214,8 @@ luaopen_osext(lua_State *L){
 		{ "uuid_str20", luuid_str20 },
 		{ "uuid_hex", luuid_hex },
 		{ "uuid_num", luuid_num },
+		{ "uuid_binary", luuid_binary },
+		{ "to_basex", lto_basex },
 		{ NULL, NULL },
 	};
 	luaL_newlib(L, l);
