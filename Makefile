@@ -57,7 +57,7 @@ CSERVICE = snlua logger gate harbor
 LUA_CLIB = skynet \
   client \
   bson  md5 sproto lpeg \
-  cjson protobuf \
+  cjson protobuf lfs \
   websocketnetpack clientwebsocket webclient \
   zlib unqlite lsqlite3 \
   cipher codec iconv random snowflake osext \
@@ -144,6 +144,10 @@ $(LUA_CLIB_PATH)/zlib.so: 3rd/lua-zlib/lua_zlib.c | $(LUA_CLIB_PATH)
 $(LUA_CLIB_PATH)/cjson.so: | $(LUA_CLIB_PATH)
 	cd 3rd/lua-cjson && $(MAKE) LUA_INCLUDE_DIR=../../$(LUA_INC) CC=$(CC) \
 	CJSON_LDFLAGS="$(SHARED)" && cd ../.. && cp 3rd/lua-cjson/cjson.so $@
+
+#lfs
+$(LUA_CLIB_PATH)/lfs.so: 3rd/lua-lfs/src/lfs.c | $(LUA_CLIB_PATH) 
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
 
 #unqlite
 $(LUA_CLIB_PATH)/unqlite.so: 3rd/lua-unqlite/lua-unqlite.c 3rd/unqlite/unqlite.c | $(LUA_CLIB_PATH)
