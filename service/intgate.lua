@@ -1,6 +1,6 @@
 local skynet = require "skynet"
-local gateserver = require "snax.wsgateserver"
-local netpack = require "websocketnetpack"
+local gateserver = require "snax.intgateserver"
+local netpack = require "intnetpack"
 
 local watchdog
 local connection = {}	-- fd -> connection : { fd , client, agent , ip, mode }
@@ -30,8 +30,7 @@ function handler.message(fd, msg, sz)
 	if agent then
 		skynet.redirect(agent, c.client, "client", 0, msg, sz)
 	else
-		--skynet.redirect(watchdog, fd, "client", 0, msg, sz)
-		skynet.send(watchdog, "lua", "socket", "data", fd, netpack.tostring(msg, sz))
+		skynet.redirect(watchdog, fd, "client", 0, msg, sz)
 	end
 end
 
@@ -74,7 +73,6 @@ function handler.warning(fd, size)
 	skynet.send(watchdog, "lua", "socket", "warning", fd, size)
 end
 
-
 local CMD = {}
 
 function CMD.forward(source, fd, client, address)
@@ -100,11 +98,6 @@ end
 
 function CMD.kick(source, fd)
 	gateserver.closeclient(fd)
-end
-
---
-function CMD.send_buffer(source, fd, buffer, isText)
-	gateserver.send_buffer(fd, buffer, isText)
 end
 
 function handler.command(cmd, source, ...)

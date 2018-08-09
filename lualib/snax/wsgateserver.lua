@@ -7,6 +7,8 @@ local string = require "string"
 local crypt = require "skynet.crypt"
 local gateserver = {}
 
+local max_packsize = 10*1024
+local max_headersize = 1024
 local socket	-- listen socket
 local queue		-- message queue
 local maxclient	-- max client
@@ -130,7 +132,6 @@ end
 function gateserver.openclient(fd)
 	if connection[fd] ~= nil  and  connection[fd].isconnect then
 		socketdriver.start(fd)
-		skynet.error("wsgateserver openclient fd="..fd)
 		return true
 	end
 	return false
@@ -139,9 +140,9 @@ end
 function gateserver.closeclient(fd)
 	local c = connection[fd]
 	if c then
+		client_number = client_number - 1
 		connection[fd] = nil
 		socketdriver.close(fd)
-		skynet.error("wsgateserver closeclient fd="..fd)
 	end
 end
 
@@ -178,7 +179,7 @@ function gateserver.start(handler)
 		local port = assert(conf.port)
 		maxclient = conf.maxclient or 1024
 		nodelay = conf.nodelay
-		skynet.error(string.format("wsgateserver listen on %s:%d", address, port))
+		skynet.error(string.format("Listen on %s:%d", address, port))
 		socket = socketdriver.listen(address, port)
 		socketdriver.start(socket)
 		if handler.open then
@@ -189,7 +190,6 @@ function gateserver.start(handler)
 	function CMD.close()
 		assert(socket)
 		socketdriver.close(socket)
-		skynet.error(string.format("wsgateserver close"))
 	end
 
 	local MSG = {}
@@ -198,13 +198,27 @@ function gateserver.start(handler)
 		if connection[fd] ~= nil and connection[fd].isconnect then
 			if connection[fd].iswebsocket_handeshake == 1 then
 				--websocket 握手回包处理
+				if sz >= max_headersize then
+					gateserver.closeclient(fd)
+					return
+				end
+
 				local str_msg = netpack.tostring(msg, sz)
 				local header = parse_httpheader(str_msg)
 				if (gateserver.checkwebsocket(fd, header)) then
 					connection[fd].iswebsocket_handeshake = 0
-				end								
+				end
+				return
+			end
+
+			if sz >= max_packsize then				
+				gateserver.closeclient(fd)
+				return
+			end
+			if sz == 0 then
+				gateserver.closeclient(fd)
 			else
-				handler.message(fd, msg, sz)
+				handler.message(fd, msg, sz)	
 			end
 		else
 			skynet.error(string.format("Drop message from fd (%d) : %s", fd, netpack.tostring(msg,sz)))
@@ -252,14 +266,12 @@ function gateserver.start(handler)
 		end
 	end
 
-	--被关闭socket回调
 	function MSG.close(fd)
 		if fd ~= socket then
 			if handler.disconnect then
 				handler.disconnect(fd)
 			end
 			close_fd(fd)
-			skynet.error(string.format("wsgateserver socket[%d] closed", fd))
 		else
 			socket = nil
 		end
@@ -289,9 +301,9 @@ function gateserver.start(handler)
 		unpack = function ( msg, sz )
             local _, fd = socketdriver.unpack(msg, sz)
 			if (connection[fd] == nil ) then
-					return netpack.filter( queue, msg, sz, 1)
+				return netpack.filter( queue, msg, sz, 1)
 			elseif connection[fd].isconnect then
-					return netpack.filter( queue, msg, sz, connection[fd].iswebsocket_handeshake)
+				return netpack.filter( queue, msg, sz, connection[fd].iswebsocket_handeshake)
 			end
 			return netpack.filter( queue, msg, sz, 1)
 		end,
@@ -305,14 +317,14 @@ function gateserver.start(handler)
 
     skynet.start(function()
      	skynet.dispatch("lua", function (_, address, cmd, ...)
-     	    local f = CMD[cmd]
-        	if f then
-            	skynet.ret(skynet.pack(f(address, ...)))
+     		local f = CMD[cmd]
+          	if f then
+              	skynet.ret(skynet.pack(f(address, ...)))
           	else
-            	skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
-        	end
+              	skynet.ret(skynet.pack(handler.command(cmd, address, ...)))
+          	end
         end)
-    end)
+     end)
  end
 
 return gateserver
