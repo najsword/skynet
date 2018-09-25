@@ -56,11 +56,12 @@ CSERVICE = snlua logger gate harbor
 
 LUA_CLIB = skynet \
   client \
-  bson  md5 sproto lpeg \
-  cjson protobuf lfs \
+  bson  md5 skynet_crypt sproto lpeg \
+  cjson protobuf \
   websocketnetpack clientwebsocket webclient \
-  zlib unqlite lsqlite3 \
-  cipher codec iconv random snowflake osext \
+  zlib mt19937 snowflake \
+  unqlite lsqlite3 \
+  httppack add\
   
   
 LUA_CLIB_SKYNET = \
@@ -78,7 +79,6 @@ LUA_CLIB_SKYNET = \
   lua-mysqlaux.c \
   lua-debugchannel.c \
   lua-datasheet.c \
-
 
 SKYNET_SRC = skynet_main.c skynet_handle.c skynet_module.c skynet_mq.c \
   skynet_server.c skynet_start.c skynet_timer.c skynet_error.c \
@@ -118,6 +118,9 @@ $(LUA_CLIB_PATH)/md5.so : 3rd/lua-md5/md5.c 3rd/lua-md5/md5lib.c 3rd/lua-md5/com
 $(LUA_CLIB_PATH)/client.so : lualib-src/lua-clientsocket.c lualib-src/lua-crypt.c lualib-src/lsha1.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lpthread
 
+$(LUA_CLIB_PATH)/skynet_crypt.so : lualib-src/lua-crypt.c lualib-src/lsha1.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ 
+
 $(LUA_CLIB_PATH)/sproto.so : lualib-src/sproto/sproto.c lualib-src/sproto/lsproto.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -Ilualib-src/sproto $^ -o $@ 
 
@@ -136,6 +139,14 @@ $(LUA_CLIB_PATH)/clientwebsocket.so: lualib-src/lua-clientwebsocket.c | $(LUA_CL
 $(LUA_CLIB_PATH)/webclient.so: lualib-src/lua-webclient.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -lcurl
 
+#mt19937随机数
+$(LUA_CLIB_PATH)/mt19937.so: lualib-src/mt19937-64/mt19937-64.c lualib-src/mt19937-64/lmt19937.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
+
+#snowflake全局uuid生成器
+$(LUA_CLIB_PATH)/snowflake.so: lualib-src/lua-snowflake.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
+
 #zlib
 $(LUA_CLIB_PATH)/zlib.so: 3rd/lua-zlib/lua_zlib.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-zlib -L3rd/lua-zlib/src $^ -o $@ -lz
@@ -145,10 +156,6 @@ $(LUA_CLIB_PATH)/cjson.so: | $(LUA_CLIB_PATH)
 	cd 3rd/lua-cjson && $(MAKE) LUA_INCLUDE_DIR=../../$(LUA_INC) CC=$(CC) \
 	CJSON_LDFLAGS="$(SHARED)" && cd ../.. && cp 3rd/lua-cjson/cjson.so $@
 
-#lfs
-$(LUA_CLIB_PATH)/lfs.so: 3rd/lua-lfs/src/lfs.c | $(LUA_CLIB_PATH) 
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
-
 #unqlite
 $(LUA_CLIB_PATH)/unqlite.so: 3rd/lua-unqlite/lua-unqlite.c 3rd/unqlite/unqlite.c | $(LUA_CLIB_PATH)
 	$(CC) $(DEFS) $(CFLAGS) $(SHARED) -I3rd/unqlite $^ -o $@ $(LDFLAGS)
@@ -157,39 +164,20 @@ $(LUA_CLIB_PATH)/unqlite.so: 3rd/lua-unqlite/lua-unqlite.c 3rd/unqlite/unqlite.c
 $(LUA_CLIB_PATH)/lsqlite3.so: 3rd/lua-sqlite3/lsqlite3.c 3rd/sqlite3/sqlite3.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-sqlite3 -I3rd/sqlite3  $^ -o $@ 
 
+#httppack
+$(LUA_CLIB_PATH)/httppack.so: lualib-src/lua-httppack.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@ 
+
+$(LUA_CLIB_PATH)/add.so: lualib-src/add.c | $(LUA_CLIB_PATH)
+	$(CC) $(CFLAGS) $(SHARED)  $^ -o $@ 
+
 #protobuf
-$(LUA_CLIB_PATH)/protobuf.so:  3rd/lua-pbc/alloc.c 3rd/lua-pbc/array.c 3rd/lua-pbc/bootstrap.c \
+$(LUA_CLIB_PATH)/protobuf.so :  3rd/lua-pbc/alloc.c 3rd/lua-pbc/array.c 3rd/lua-pbc/bootstrap.c \
 	3rd/lua-pbc/context.c 3rd/lua-pbc/decode.c 3rd/lua-pbc/map.c 3rd/lua-pbc/pattern.c 3rd/lua-pbc/proto.c \
 	3rd/lua-pbc/register.c 3rd/lua-pbc/rmessage.c 3rd/lua-pbc/stringpool.c 3rd/lua-pbc/varint.c \
 	3rd/lua-pbc/wmessage.c 3rd/lua-pbc/pbc-lua.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-pbc $^ -o $@
 
-#cipher
-$(LUA_CLIB_PATH)/cipher.so: 3rd/lua-cipher/aes.c 3rd/lua-cipher/crc16.c 3rd/lua-cipher/crc32.c 3rd/lua-cipher/crc64.c \
-	3rd/lua-cipher/digest.c 3rd/lua-cipher/hmac.c 3rd/lua-cipher/md5.c 3rd/lua-cipher/pbkdf2_hmac.c 3rd/lua-cipher/rc4.c \
-	3rd/lua-cipher/sha.c 3rd/lua-cipher/sha1.c 3rd/lua-cipher/sha224.c 3rd/lua-cipher/sha256.c 3rd/lua-cipher/sha384.c \
-	3rd/lua-cipher/sha512.c 3rd/lua-cipher/tdes.c 3rd/lua-cipher/cipher.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-cipher $^ -o $@
-	
-#codec
-$(LUA_CLIB_PATH)/codec.so: 3rd/lua-codec/codec.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-codec $^ -o $@ -lcrypto
-
-#iconv
-$(LUA_CLIB_PATH)/iconv.so: 3rd/lua-iconv/luaiconv.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
-
-#mt19937随机数
-$(LUA_CLIB_PATH)/random.so: 3rd/lua-random/lua-random.c 3rd/lua-random/mt19937-64.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@
-
-#snowflake全局id
-$(LUA_CLIB_PATH)/snowflake.so: 3rd/lua-snowflake/lua-snowflake.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) -Iskynet-src $^ -o $@
-
-#osext(uuid, time)
-$(LUA_CLIB_PATH)/osext.so: 3rd/lua-osext/lua-osext.c | $(LUA_CLIB_PATH)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $@ -luuid
 
 clean :
 	rm -f $(SKYNET_BUILD_PATH)/skynet $(CSERVICE_PATH)/* $(LUA_CLIB_PATH)/*
